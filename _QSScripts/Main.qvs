@@ -20,8 +20,6 @@ SET NumericalAbbreviation='3:k;6:M;9:G;12:T;15:P;18:E;21:Z;24:Y;-3:m;-6:μ;-9:n;
 
 
 LET vTodayDate = Today();
-LET vSaturdayDate = Date(Num(Today())-1);
-LET vSundayDate = Date(Num(Today())-2);
 
 Holidays:
 Mapping LOAD * Inline
@@ -66,12 +64,18 @@ A
 
 vTodayIsHoliday = Peek('IsHoliday',0,'TodayIsHoliday')
 
+SUB QVDload
 
+    SpxClose:
+    Load * Inline
+    [
+    Expiration, Close
+    2021-12-31, 4766
+    ]
+    ;
 
-IF Weekday(Today())*1=6 or Weekday(Today())*1=0 THEN
-
-
-LOAD
+    Main:
+	LOAD
     "Symbol",
     "Call/Put",
     Expiration,
@@ -86,8 +90,13 @@ LOAD
     "Exp. Counter",
     "Exp. Amount",
     "Exp. Last Price"
-FROM [lib://DataFiles/COBE_SPX_Option_Data.qvd](qvd)
-;
+	FROM [lib://DataFiles/COBE_SPX_Option_Data.qvd](qvd)
+	;
+END SUB
+
+IF Weekday(Today())*1=6 or Weekday(Today())*1=0 THEN
+
+CALL QVDload
 
 Drop Table TodayIsHoliday;
 
@@ -95,23 +104,7 @@ EXIT SCRIPT;
 
 ELSEIF vTodayIsHoliday=1 THEN
 
-LOAD
-    "Symbol",
-    "Call/Put",
-    Expiration,
-    "Strike Price",
-    Volume,
-    "Last Price",
-    Amount,
-    Counter,
-    "Trade Date",
-    "Class",
-    "Exp. Volume",
-    "Exp. Counter",
-    "Exp. Amount",
-    "Exp. Last Price"
-FROM [lib://DataFiles/COBE_SPX_Option_Data.qvd](qvd)
-;
+CALL QVDload
 
 Drop Table TodayIsHoliday;
 

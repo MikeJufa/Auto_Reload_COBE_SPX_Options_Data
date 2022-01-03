@@ -89,7 +89,8 @@ SUB QVDload
     "Exp. Volume",
     "Exp. Counter",
     "Exp. Amount",
-    "Exp. Last Price"
+    "Exp. Last Price",
+    YearMonth
 	FROM [lib://DataFiles/COBE_SPX_Option_Data.qvd](qvd)
 	;
 END SUB
@@ -112,15 +113,18 @@ EXIT SCRIPT;
 
 ELSE
 
+
+
 LIB CONNECT TO 'REST_httpswww.cboe.comusoptionsmarket_statisticssymbol_datacsvmkt=cone';
 
 Incremental:
 Load *
-	, If([Amount]>=500000,'Large', If([Amount]>=50000,'Median', If([Amount]>0,'Small'))) as Class
-    , If(Expiration-Today()>0,[Volume],0) as [Exp. Volume]
-    , If(Expiration-Today()>0,[Counter],0) as [Exp. Counter]
-    , If(Expiration-Today()>0,[Amount],0) as [Exp. Amount]
-    , If(Expiration-Today()>0,[Last Price],0) as [Exp. Last Price]
+	, If([Amount]>=500000,'Large', If([Amount]>=50000,'Median', If([Amount]>0,'Small'))) as [Class]
+    , If([Expiration]-Today()>0,[Volume],0) as [Exp. Volume]
+    , If([Expiration]-Today()>0,[Counter],0) as [Exp. Counter]
+    , If([Expiration]-Today()>0,[Amount],0) as [Exp. Amount]
+    , If([Expiration]-Today()>0,[Last Price],0) as [Exp. Last Price]
+    , Year([Expiration])&date(date#([Expiration],'YYYY-MM-DD'),'MM') as [YearMonth]
 ;
 Load
 	  [Symbol]
@@ -132,7 +136,7 @@ Load
     , Num([Last Price]*[Volume],'$#,##0.00') as [Amount]
     , 1 as [Counter]
     , Date(Today()-0) as [Trade Date]
-Where Match(Symbol,'SPX')
+Where Match([Symbol],'SPX')
 ;
 SQL SELECT
 	"Symbol",
@@ -150,6 +154,7 @@ SQL SELECT
 FROM CSV (header on, delimiter ",", quote """") "CSV_source"
 ;
 
+
 Concatenate
 LOAD
     "Symbol",
@@ -165,9 +170,11 @@ LOAD
     "Exp. Volume",
     "Exp. Counter",
     "Exp. Amount",
-    "Exp. Last Price"
+    "Exp. Last Price",
+    YearMonth
 FROM [lib://DataFiles/COBE_SPX_Option_Data.qvd](qvd)
 ;
+
 
 Store Incremental into [lib://DataFiles/COBE_SPX_Option_Data.qvd](qvd);
 

@@ -64,15 +64,20 @@ A
 
 vTodayIsHoliday = Peek('IsHoliday',0,'TodayIsHoliday')
 
-SUB QVDload
+SUB SpxCloseLoad
 
     SpxClose:
     Load * Inline
     [
     Expiration, Close
     2021-12-31, 4766
+    2022-01-03, 4797
     ]
     ;
+
+END SUB
+
+SUB QvdLoad
 
     Main:
 	LOAD
@@ -93,11 +98,13 @@ SUB QVDload
     YearMonth
 	FROM [lib://DataFiles/COBE_SPX_Option_Data.qvd](qvd)
 	;
+
 END SUB
 
 IF Weekday(Today())*1=6 or Weekday(Today())*1=0 THEN
 
-CALL QVDload
+CALL SpxCloseLoad
+CALL QvdLoad
 
 Drop Table TodayIsHoliday;
 
@@ -105,15 +112,14 @@ EXIT SCRIPT;
 
 ELSEIF vTodayIsHoliday=1 THEN
 
-CALL QVDload
+CALL SpxCloseLoad
+CALL QvdLoad
 
 Drop Table TodayIsHoliday;
 
 EXIT SCRIPT;
 
 ELSE
-
-
 
 LIB CONNECT TO 'REST_httpswww.cboe.comusoptionsmarket_statisticssymbol_datacsvmkt=cone';
 
@@ -154,7 +160,6 @@ SQL SELECT
 FROM CSV (header on, delimiter ",", quote """") "CSV_source"
 ;
 
-
 Concatenate
 LOAD
     "Symbol",
@@ -175,8 +180,9 @@ LOAD
 FROM [lib://DataFiles/COBE_SPX_Option_Data.qvd](qvd)
 ;
 
-
 Store Incremental into [lib://DataFiles/COBE_SPX_Option_Data.qvd](qvd);
+
+CALL SpxCloseLoad
 
 DROP TABLE TodayIsHoliday;
 
